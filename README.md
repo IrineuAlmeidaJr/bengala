@@ -1,4 +1,4 @@
-# BENGALA DIGITAL - p/deficiente visual
+# BENGALA DIGITAL ARDUINO - p/deficiente visual
 
 - DESCRIÇÃO RESUMIDA DO PROJETO
 
