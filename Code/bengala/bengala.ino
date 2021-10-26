@@ -143,9 +143,9 @@ void loop(){
   distancia_A = CalculaDistancia(tempoEcho_A);  
   
   // - Sensor ultrassônico B
-  DisparaPulsoUltrassonico(PinTrigger_B); // Envia pulso para o disparar o sensor ultrassônico B
-  tempoEcho_B = pulseIn(PinEcho_B, HIGH); // Mede o tempo de duração do sinal no pino de leitura(us)
-  distancia_B = CalculaDistancia(tempoEcho_B); 
+//  DisparaPulsoUltrassonico(PinTrigger_B); // Envia pulso para o disparar o sensor ultrassônico B
+//  tempoEcho_B = pulseIn(PinEcho_B, HIGH); // Mede o tempo de duração do sinal no pino de leitura(us)
+//  distancia_B = CalculaDistancia(tempoEcho_B); 
   
 //  // - Sensor ultrassônico C
 //  DisparaPulsoUltrassonico(PinTrigger_C); // Envia pulso para o disparar o sensor ultrassônico C
@@ -160,19 +160,19 @@ void loop(){
 //  Serial.print("\nDistancia em centimetros distancia_C: ");
 //  Serial.print(distancia_C);
 
-  if(distancia_A <  10 || distancia_B <  10) {
+  if(distancia_A <  10) {
      tone(buzzer,1500);   
   } else {   
-    if(distancia_A <  30 || distancia_B <  30) {
+    if(distancia_A <  30 ) {
        tone(buzzer,1450);     
     } else {
-        if(distancia_A <  50 || distancia_B <  50) {
+        if(distancia_A <  50) {
           tone(buzzer,1400);    
       } else {
-        if(distancia_A <  80 || distancia_B <  80) {
+        if(distancia_A <  80) {
           tone(buzzer,1200); 
         } else {
-          if(distancia_A  < 100 || distancia_B <  100) { 
+          if(distancia_A  < 100) { 
             tone(buzzer,1100);    
           } else {
             noTone(buzzer);
