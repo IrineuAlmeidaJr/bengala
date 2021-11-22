@@ -59,6 +59,17 @@
  *    I   - 
  *    II  - 
  */
+#include "SIM900.h"
+#include <SoftwareSerial.h>
+#include "sms.h"
+SMSGSM sms;
+
+int numdata;
+boolean started=false;
+char smsbuffer[160];
+char n[20];
+
+
 
 // *** Variáveis Sensores
 // - Sensor de inclinação
@@ -110,10 +121,27 @@ void setup(){
 
   // - Prepara sensor de inclinação 
    pinMode(sensorIncli, INPUT);
-   Serial.begin(9600);
+
+  // - Prepara GSM
+  //Serial connection.
+  Serial.begin(9600);
+  Serial.println("GSM Shield testing.");
+  //Start configuration of shield with baudrate.
+  //For http uses is raccomanded to use 4800 or slower.
+  if (gsm.begin(2400)){
+    Serial.println("\nstatus=READY");
+    started=true;  
+  }
+  else Serial.println("\nstatus=IDLE");
+  
+  
+   
+
+  // - Prepara botao
+  //pinMode(buttonPin, INPUT); 
   
   // Inicializa a porta serial
-  Serial.begin(9600);
+  Serial.begin(4800);
   delay(100);
 
   // Se o BUZZER não funcionar é pq coloquei ele como primeiro e ele deve ser aqui -->
@@ -152,6 +180,7 @@ void loop(){
 //  tempoEcho_C = pulseIn(PinEcho_C, HIGH); // Mede o tempo de duração do sinal no pino de leitura(us)
 //  distancia_C = CalculaDistancia(tempoEcho_C); 
 
+noTone(buzzer);  
   // *** Apenas para controle, saber a distância 
   Serial.print("\nDistancia em centimetros distancia_A: ");
   Serial.print(distancia_A);
@@ -161,19 +190,32 @@ void loop(){
 //  Serial.print(distancia_C);
 
   if(distancia_A <  10) {
-     tone(buzzer,1500);   
+     tone(buzzer,1200);   
   } else {   
     if(distancia_A <  30 ) {
-       tone(buzzer,1450);     
+      tone(buzzer,1200);
+       for(int i = 0; i < 6; i++) {       
+         tone(buzzer,1200);
+         delay(50);
+         noTone(buzzer);  
+       }           
     } else {
         if(distancia_A <  50) {
-          tone(buzzer,1400);    
+          tone(buzzer,1500);
+//          for(int i = 0; i < 4; i++) {       
+//           tone(buzzer,1500);
+//           noTone(buzzer);  
+//          }    
       } else {
         if(distancia_A <  80) {
-          tone(buzzer,1200); 
+          tone(buzzer,1500);
+//          for(int i = 0; i < 2; i++) {       
+//           tone(buzzer,1500);
+//           noTone(buzzer);  
+//          } 
         } else {
           if(distancia_A  < 100) { 
-            tone(buzzer,1100);    
+            tone(buzzer,1500);    
           } else {
             noTone(buzzer);
           }
@@ -197,6 +239,23 @@ void loop(){
     tempoAnterior = millis();
     tempoAtual = 0;
     segundos++;
+  }
+
+  if(segundos > 30) {
+    tone(buzzer,700);
+     if(started){
+    //Read if there are messages on SIM card and print them.
+    if(gsm.readSMS(smsbuffer, 160, n, 20))
+    {
+      Serial.println(n);
+      Serial.println(smsbuffer);
+    }
+    if(started){
+    //Enable this two lines if you want to send an SMS.
+    if (sms.SendSMS("18991609780", "Cai estou na localizacao X ... Y"))
+      Serial.println("\nSMS sent OK");
+  }
+    }
   }
 
   // ----- TALVEZ TIRA OU MANTEM se o de cina não funcionar ----->
@@ -232,7 +291,7 @@ void loop(){
   
   
   // Delay para fazer refazer o código 
-  delay(50);
+  delay(500);
 
   //TESTE
 }
