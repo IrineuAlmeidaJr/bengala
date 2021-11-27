@@ -28,6 +28,7 @@ float distancia_A = 0;
 float distancia_B = 0;
 const float velocidadeSom_ms = 0.00034029; 
 boolean smsEnviado = false;
+boolean alarmeQueda = false;
 
 void setup(){
   
@@ -76,35 +77,37 @@ void leituraSensorUltrassonico(int pinTrigger, int pinEcho, float tempoEcho, flo
 }
 
 void alertaProximidade() {
-  if(distancia_A <  10 || distancia_B < 20) {
-     tone(buzzer,1200);   
-  } else {   
-    if(distancia_A <  30 || distancia_B < 60) {
-      tone(buzzer,1200);  
-      delay(110);
-      noTone(buzzer);   
-    } else {
-        if(distancia_A <  50 || distancia_B < 80) {
-          tone(buzzer,1200);  
-          delay(200);
-          noTone(buzzer);     
+  if(!alarmeQueda) {
+    if(distancia_A <  10 || distancia_B < 20) {
+       tone(buzzer,1200);   
+    } else {   
+      if(distancia_A <  30 || distancia_B < 60) {
+        tone(buzzer,1200);  
+        delay(110);
+        noTone(buzzer);   
       } else {
-        if(distancia_A <  80 || distancia_B < 110) {
-          tone(buzzer,1200);  
-          delay(600);
-          noTone(buzzer);  
+          if(distancia_A <  50 || distancia_B < 80) {
+            tone(buzzer,1200);  
+            delay(200);
+            noTone(buzzer);     
         } else {
-          if(distancia_A  < 100 || distancia_B < 130) { 
-            tone(buzzer,800);  
+          if(distancia_A <  80 || distancia_B < 110) {
+            tone(buzzer,1200);  
             delay(600);
             noTone(buzzer);  
           } else {
-            noTone(buzzer);
+            if(distancia_A  < 100 || distancia_B < 130) { 
+              tone(buzzer,800);  
+              delay(600);
+              noTone(buzzer);  
+            } else {
+              noTone(buzzer);
+            }
           }
         }
       }
     }
-  }
+  }    
 }
 
 void infoSenInclinacao() {
@@ -113,10 +116,11 @@ void infoSenInclinacao() {
     tempoAnterior = millis();
     tempoAtual = 0;
     segundos = 0;
-    smsEnviado = false;
+    alarmeAjuda = false;
   } else {
     Serial.println("\n\nInclinado");
     tempoAtual = millis() - tempoAnterior;
+    alarmeAjuda = true;
   }
 }
 
@@ -129,28 +133,25 @@ void contInclinado() {
 }
 
 void pedidoAjuda() {
-  if(segundos > 30) { // Se passar de 30s que caiu irá automaticamente enviar uma mensagem
-    tone(buzzer,700);
-    if(!smsEnviado) {
-        if(started){
-        if(gsm.readSMS(smsbuffer, 160, n, 20)) {
-          Serial.println(n);
-          Serial.println(smsbuffer);
-        }
-        if(started){
-          if (sms.SendSMS("18991609780", "Cai estou na localizacao X ... Y"))
-          Serial.println("\nSMS sent OK");
-        }
+  if(segundos > 30 && !smsEnviado) { // Se passar de 30s que caiu irá automaticamente enviar uma mensagem
+      if(started){
+      if(gsm.readSMS(smsbuffer, 160, n, 20)) {
+        Serial.println(n);
+        Serial.println(smsbuffer);
       }
-      smsEnviado = true;
-    }    
+      if(started){
+        if (sms.SendSMS("18991609780", "Cai estou na localizacao X ... Y"))
+        Serial.println("\nSMS sent OK");
+      }
+    }
+    smsEnviado = true;   
   }
 }
 
 void cancelarPedidoAjuda() {
   if (digitalRead(botao) == LOW){ // Se o botão for apertado e solto, por aproximadamente 1 segundo
-    segundos = 0;
-    smsEnviado = false;
+    segundos = -20;
+    alarmeQueda = false;
     if(started){
       if(gsm.readSMS(smsbuffer, 160, n, 20)) {
         Serial.println(n);
@@ -161,6 +162,15 @@ void cancelarPedidoAjuda() {
           Serial.println("\nSMS sent OK");
       }
     }
+  }
+}
+
+void alarmeAjuda() {
+  if(alarmeQueda) {
+    delay(500);
+    tone(buzzer,1200);  
+    delay(200);
+    noTone(buzzer); 
   }
 }
 
@@ -186,6 +196,7 @@ void loop(){
   infoSenInclinacao();
   contInclinado();
   pedidoAjuda();
+  alarmeAjuda()
   cancelarPedidoAjuda();
   exibirTempoSegundos();
   
