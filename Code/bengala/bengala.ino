@@ -19,18 +19,17 @@ char n[20]; // Porta 50 e 51 mudamos na biblioteca
 
 // *** Variáveis Sensores
 // - Sensor de inclinação
-int sensorIncli = 7;
+const int sensorIncli = 31;
 // - Sensor ultrassônico A
-int PinTrigger_A = 3; // Pino usado para disparar os pulsos do sensor
-int PinEcho_A = 2; // Pino usado para ler a saida do sensor
+const int PinTrigger_A = 3; // Pino usado para disparar os pulsos do sensor
+const int PinEcho_A = 2; // Pino usado para ler a saida do sensor
 // - Sensor ultrassônico B
-int PinTrigger_B = 5; // Pino usado para disparar os pulsos do sensor
-int PinEcho_B = 4; // pino usado para ler a saida do sensor
-// - Sensor ultrassônico C
-//int PinTrigger_C = 3; // Pino usado para disparar os pulsos do sensor
-//int PinEcho_C = 2; // pino usado para ler a saida do sensor
+const int PinTrigger_B = 5; // Pino usado para disparar os pulsos do sensor
+const int PinEcho_B = 4; // pino usado para ler a saida do sensor
 // Buzzer 
 const int buzzer = 8;
+// Botão 
+const int buttonPin = 11;
 
 // Variáveis do Programa
 long tempoAnterior = 0;
@@ -44,6 +43,7 @@ float distancia_A = 0;
 float distancia_B = 0;
 float distancia_C = 0;
 const float VelocidadeSom_mporus = 0.00034029; // velocidade do som em metros por microsegundo 
+int estado;
 
 boolean smsEnviado = false;
 
@@ -60,32 +60,26 @@ void setup(){
   pinMode(PinTrigger_B, OUTPUT);
   digitalWrite(PinTrigger_B, LOW);
   pinMode(PinEcho_B, INPUT);
-  
-//  // - Prepara sensor ultrassônico C
-//  pinMode(PinTrigger_C, OUTPUT);
-//  digitalWrite(PinTrigger_C, LOW);
-//  pinMode(PinEcho_C, INPUT);
 
   // - Prepara sensor de inclinação 
    pinMode(sensorIncli, INPUT);
 
   // - Prepara GSM
-  //Serial connection.
-  Serial.begin(9600);
-  Serial.println("GSM Shield testing.");
-  //Start configuration of shield with baudrate.
-  //For http uses is raccomanded to use 4800 or slower.
-  if (gsm.begin(2400)){
-    Serial.println("\nstatus=READY");
-    started=true;  
-  }
-  else Serial.println("\nstatus=IDLE");
+//  //Serial connection.
+//  Serial.println("GSM Shield testing.");
+//  //Start configuration of shield with baudrate.
+//  //For http uses is raccomanded to use 4800 or slower.
+//  if (gsm.begin(2400)){
+//    Serial.println("\nstatus=READY");
+//    started=true;  
+//  }
+//  else Serial.println("\nstatus=IDLE");
   
   
    
 
   // - Prepara botao
-  //pinMode(buttonPin, INPUT); 
+  pinMode(buttonPin, INPUT); 
   
   // Inicializa a porta serial
   Serial.begin(4800);
@@ -127,42 +121,35 @@ void loop(){
 //  tempoEcho_C = pulseIn(PinEcho_C, HIGH); // Mede o tempo de duração do sinal no pino de leitura(us)
 //  distancia_C = CalculaDistancia(tempoEcho_C); 
 
-noTone(buzzer);  
+
   // *** Apenas para controle, saber a distância 
   Serial.print("\nDistancia em centimetros distancia_A: ");
   Serial.print(distancia_A);
   Serial.print("\nDistancia em centimetros distancia_B: ");
   Serial.print(distancia_B);
-//  Serial.print("\nDistancia em centimetros distancia_C: ");
-//  Serial.print(distancia_C);
 
-  if(distancia_A <  10 || distancia_B < 10) {
+  if(distancia_A <  10 || distancia_B < 20) {
      tone(buzzer,1200);   
   } else {   
-    if(distancia_A <  30 || distancia_B < 30) {
-      tone(buzzer,1200);
-       for(int i = 0; i < 6; i++) {       
-         tone(buzzer,1200);
-         delay(50);
-         noTone(buzzer);  
-       }           
+    if(distancia_A <  30 || distancia_B < 60) {
+      tone(buzzer,1200);  
+      delay(110);
+      noTone(buzzer);   
     } else {
-        if(distancia_A <  50 || distancia_B < 50) {
-          tone(buzzer,1500);
-//          for(int i = 0; i < 4; i++) {       
-//           tone(buzzer,1500);
-//           noTone(buzzer);  
-//          }    
+        if(distancia_A <  50 || distancia_B < 80) {
+          tone(buzzer,1200);  
+          delay(200);
+          noTone(buzzer);     
       } else {
-        if(distancia_A <  80 || distancia_B < 80) {
-          tone(buzzer,1500);
-//          for(int i = 0; i < 2; i++) {       
-//           tone(buzzer,1500);
-//           noTone(buzzer);  
-//          } 
+        if(distancia_A <  80 || distancia_B < 110) {
+          tone(buzzer,1200);  
+          delay(600);
+          noTone(buzzer);  
         } else {
-          if(distancia_A  < 100 || distancia_B < 100) { 
-            tone(buzzer,1500);    
+          if(distancia_A  < 100 || distancia_B < 130) { 
+            tone(buzzer,800);  
+            delay(600);
+            noTone(buzzer);  
           } else {
             noTone(buzzer);
           }
@@ -189,7 +176,7 @@ noTone(buzzer);
     segundos++;
   }
 
-  if(segundos > 30) {
+  if(segundos > 99999) { // Arrumar o TEMPO 
     tone(buzzer,700);
     if(!smsEnviado) { // *** TESTAR SE ISSO FAZ ENVIAR só uma MENSAGEM DEPOIS QUE CAIU
         if(started){
@@ -208,12 +195,29 @@ noTone(buzzer);
     }    
   }
 
+
+  //Se o botao foi apertado
+  if (digitalRead(buttonPin) == LOW){ // LOW = Botão precionado
+        segundos = 0;
+        smsEnviado = false;
+        if(started){
+          if(gsm.readSMS(smsbuffer, 160, n, 20)) {
+            Serial.println(n);
+            Serial.println(smsbuffer);
+          }
+          if(started){
+            if (sms.SendSMS("18991609780", "Foi um alarme falso estou bem, apenas deixei a bengala cair"))
+            Serial.println("\nSMS sent OK");
+          }
+        }
+    }
+
   Serial.print("\n\nTempo segundo: ");
   Serial.print(segundos);
   Serial.print("\n\n");
   
   
   // Delay para fazer refazer o código 
-  delay(500);
+  delay(50);
 
 }
